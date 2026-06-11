@@ -102,6 +102,7 @@ def tick():
             completed_pomodoros += 1
             update_blocks()
             root.bell()  # 通知音
+        else:
             save_record()
 
         switch_mode()
