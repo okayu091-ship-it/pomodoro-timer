@@ -2,7 +2,7 @@ import tkinter as tk
 import datetime
 
 WORK_MINUTES = 1
-BREAK_MINUTES = 5
+BREAK_MINUTES = 1
 GRID_COLS = 8
 
 root = tk.Tk()
@@ -99,15 +99,17 @@ def tick():
     else:
         # タイマー終了
         if is_work_mode:
-            completed_pomodoros += 1
-            update_blocks()
-            root.bell()  # 通知音
+             completed_pomodoros += 1
+             update_blocks()
+             root.bell()
+             switch_mode()
+             tick()
         else:
-            save_record()
+             save_record()
+             switch_mode()
+             is_running = False
+             start_btn.config(text="スタート")
 
-        switch_mode()
-        is_running = False
-        start_btn.config(text="スタート")
 
 
 def toggle_start():
