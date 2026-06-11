@@ -1,6 +1,7 @@
 import tkinter as tk
+import datetime
 
-WORK_MINUTES = 25
+WORK_MINUTES = 1
 BREAK_MINUTES = 5
 GRID_COLS = 8
 
@@ -49,6 +50,14 @@ for i in range(40):
     blocks.append(block)
 
 
+def save_record():
+    today = datetime.date.today()
+    total_minutes = completed_pomodoros * WORK_MINUTES
+    with open("study_record.txt", "a", encoding="utf-8") as f:
+        f.write(f"{today} : {total_minutes}分（{completed_pomodoros}ポモドーロ）\n")
+
+
+
 def update_display():
     mins, secs = divmod(remaining_seconds, 60)
     timer_label.config(text=f"{mins:02d}:{secs:02d}")
@@ -93,6 +102,8 @@ def tick():
             completed_pomodoros += 1
             update_blocks()
             root.bell()  # 通知音
+            save_record()
+
         switch_mode()
         is_running = False
         start_btn.config(text="スタート")
