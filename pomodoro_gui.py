@@ -2,7 +2,7 @@ import tkinter as tk
 import datetime
 
 WORK_MINUTES = 1
-BREAK_MINUTES = 1
+BREAK_MINUTES = 5
 GRID_COLS = 8
 
 root = tk.Tk()
@@ -12,6 +12,9 @@ root.configure(bg="#2C2C2C")
 
 # 状態管理
 is_running = False
+count_up_mode = False
+count_up_active = False
+elapsed_seconds = 0
 is_work_mode = True
 completed_pomodoros = 0
 remaining_seconds = WORK_MINUTES * 60
@@ -35,6 +38,14 @@ start_btn.grid(row=0, column=0, padx=10)
 reset_btn = tk.Button(btn_frame, text="リセット", font=("Arial", 14), width=8, bg="#555555", fg="white", relief="flat")
 reset_btn.grid(row=0, column=1, padx=10)
 
+settings_btn = tk.Button(btn_frame, text="設定", font=("Arial", 14), width=8, bg="#777777", fg="white", relief="flat")
+settings_btn.grid(row=0, column=2, padx=10)
+
+break_btn = tk.Button(btn_frame, text="休憩する", font=("Arial", 14), width=10, bg="#6BCB77", fg="white", relief="flat")
+break_btn.grid(row=1, column=0, columnspan=3, pady=5)
+break_btn.grid_remove()
+
+
 total_label = tk.Label(root, text="累計: 0時間0分（0ポモドーロ）", font=("Arial", 12), bg="#2C2C2C", fg="#AAAAAA")
 total_label.pack()
 
@@ -50,6 +61,29 @@ for i in range(40):
     blocks.append(block)
 
 
+def open_settings():
+    settings_win = tk.Toplevel(root)
+    settings_win.title("設定")
+    settings_win.geometry("300x150")
+    settings_win.configure(bg="#2C2C2C")
+
+    tk.Label(settings_win, text="タイマーモード", font=("Arial", 14), bg="#2C2C2C", fg="white").pack(pady=10)
+
+    def set_forced():
+        global count_up_mode
+        count_up_mode = False
+        settings_win.destroy()
+
+    def set_countup():
+        global count_up_mode
+        count_up_mode = True
+        settings_win.destroy()
+
+    tk.Button(settings_win, text="ルーティンモード", font=("Arial", 12), bg="#FF6B6B", fg="white", relief="flat", command=set_forced).pack(pady=5)
+    tk.Button(settings_win, text="カウントアップモード", font=("Arial", 12), bg="#4D96FF", fg="white", relief="flat", command=set_countup).pack(pady=5)
+
+
+
 def save_record():
     today = datetime.date.today()
     total_minutes = completed_pomodoros * WORK_MINUTES
@@ -59,8 +93,12 @@ def save_record():
 
 
 def update_display():
-    mins, secs = divmod(remaining_seconds, 60)
-    timer_label.config(text=f"{mins:02d}:{secs:02d}")
+    if count_up_active:
+        mins, secs = divmod(elapsed_seconds, 60)
+        timer_label.config(text=f"+{mins:02d}:{secs:02d}")
+    else:
+        mins, secs = divmod(remaining_seconds, 60)
+        timer_label.config(text=f"{mins:02d}:{secs:02d}")
     total_minutes = completed_pomodoros * WORK_MINUTES
     hours = total_minutes // 60
     minutes = total_minutes % 60
@@ -91,25 +129,47 @@ def switch_mode():
 
 
 def tick():
-    global remaining_seconds, is_running, completed_pomodoros, timer_id
-    if remaining_seconds > 0:
+    global remaining_seconds, elapsed_seconds, is_running, completed_pomodoros, timer_id, count_up_active
+    if count_up_active:
+        elapsed_seconds += 1
+        update_display()
+        timer_id = root.after(1000, tick)
+    elif remaining_seconds > 0:
         remaining_seconds -= 1
         update_display()
         timer_id = root.after(1000, tick)
     else:
         # タイマー終了
         if is_work_mode:
-             completed_pomodoros += 1
-             update_blocks()
-             root.bell()
-             switch_mode()
-             tick()
+            completed_pomodoros += 1
+            update_blocks()
+            root.bell()
+            if count_up_mode:
+                count_up_active = True
+                elapsed_seconds = 0
+                break_btn.grid(row=1, column=0, columnspan=3, pady=5)
+                tick()
+            else:
+                switch_mode()
+                tick()
         else:
-             save_record()
-             switch_mode()
-             is_running = False
-             start_btn.config(text="スタート")
+            save_record()
+            switch_mode()
+            is_running = False
+            start_btn.config(text="スタート")
 
+
+
+
+def start_break():
+    global count_up_active, elapsed_seconds, timer_id
+    if timer_id:
+        root.after_cancel(timer_id)
+    count_up_active = False
+    elapsed_seconds = 0
+    break_btn.grid_remove()
+    switch_mode()
+    tick()
 
 
 def toggle_start():
@@ -140,6 +200,8 @@ def reset():
 
 start_btn.config(command=toggle_start)
 reset_btn.config(command=reset)
+settings_btn.config(command=open_settings)
+break_btn.config(command=start_break)
 
 update_display()
 root.mainloop()
