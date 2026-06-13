@@ -1,7 +1,7 @@
 import tkinter as tk
 import datetime
 
-WORK_MINUTES = 1
+WORK_MINUTES = 25
 BREAK_MINUTES = 5
 GRID_COLS = 8
 
@@ -22,6 +22,9 @@ timer_id = None
 
 title_label = tk.Label(root, text="ポモドーロタイマー", font=("Arial", 20, "bold"), bg="#2C2C2C", fg="white")
 title_label.pack(pady=20)
+
+mode_display_label = tk.Label(root, text="モード：ルーティン", font=("Arial", 10), bg="#2C2C2C", fg="#AAAAAA")
+mode_display_label.pack()
 
 mode_label = tk.Label(root, text="勉強中", font=("Arial", 16), bg="#2C2C2C", fg="#FF6B6B")
 mode_label.pack()
@@ -72,11 +75,13 @@ def open_settings():
     def set_forced():
         global count_up_mode
         count_up_mode = False
+        mode_display_label.config(text="モード：ルーティン")
         settings_win.destroy()
 
     def set_countup():
         global count_up_mode
         count_up_mode = True
+        mode_display_label.config(text="モード：カウントアップ")
         settings_win.destroy()
 
     tk.Button(settings_win, text="ルーティンモード", font=("Arial", 12), bg="#FF6B6B", fg="white", relief="flat", command=set_forced).pack(pady=5)
